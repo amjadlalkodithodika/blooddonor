@@ -34,9 +34,8 @@ def get_gsheet_client():
                 return None
             creds_dict = json.loads(creds_json)
 
-        # ⚠️ Do NOT replace newlines if secrets already use \n escapes
-        # Only uncomment if your secrets file uses \\n (double backslashes)
-        # creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        # 👉 Convert \\n into real newlines
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
 
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
         return gspread.authorize(creds)
@@ -361,5 +360,6 @@ with tab3:
     - 📸 [Instagram](https://instagram.com/amjadlal_kodithodika)  
     - 💼 [LinkedIn](https://linkedin.com/in/amjadlalk)  
     """)
+
 
 
