@@ -1,9 +1,19 @@
+# Core app
 streamlit
-plotly
+
+# Data handling
 pandas
 numpy
+
+# Visualization
+plotly
+
+# Google Sheets + OAuth
 gspread
 oauth2client
-email-validator
-python-dotenv
 
+# Email validation
+email-validator
+
+# Environment variables
+python-dotenv
