@@ -3,4 +3,5 @@ plotly
 pandas
 gspread
 oauth2client
+email-validator
 
