@@ -25,7 +25,6 @@ def get_gsheet_client():
 
     try:
         if "GCP_SERVICE_ACCOUNT" in st.secrets:
-            # ✅ Streamlit secrets section is already a dict
             creds_dict = dict(st.secrets["GCP_SERVICE_ACCOUNT"])
         else:
             load_dotenv()
@@ -35,9 +34,9 @@ def get_gsheet_client():
                 return None
             creds_dict = json.loads(creds_json)
 
-        # Fix private key formatting
-        if "private_key" in creds_dict:
-            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        # ⚠️ Do NOT replace newlines if secrets already use \n escapes
+        # Only uncomment if your secrets file uses \\n (double backslashes)
+        # creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
 
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
         return gspread.authorize(creds)
@@ -362,4 +361,5 @@ with tab3:
     - 📸 [Instagram](https://instagram.com/amjadlal_kodithodika)  
     - 💼 [LinkedIn](https://linkedin.com/in/amjadlalk)  
     """)
+
 
