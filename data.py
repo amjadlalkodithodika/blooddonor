@@ -25,6 +25,7 @@ def get_gsheet_client():
 
     try:
         if "GCP_SERVICE_ACCOUNT" in st.secrets:
+            # ✅ Streamlit secrets section is already a dict
             creds_dict = dict(st.secrets["GCP_SERVICE_ACCOUNT"])
         else:
             load_dotenv()
@@ -34,7 +35,7 @@ def get_gsheet_client():
                 return None
             creds_dict = json.loads(creds_json)
 
-        # 👉 Convert \\n into real newlines
+        # Fix private key formatting
         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
 
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
@@ -42,6 +43,7 @@ def get_gsheet_client():
     except Exception as e:
         st.error(f"⚠️ Failed to connect to Google Sheets: {e}")
         return None
+# print("Preview:", repr(creds_dict["private_key"][:100]))
 
 client = get_gsheet_client()
 if client:
@@ -360,6 +362,3 @@ with tab3:
     - 📸 [Instagram](https://instagram.com/amjadlal_kodithodika)  
     - 💼 [LinkedIn](https://linkedin.com/in/amjadlalk)  
     """)
-
-
-
