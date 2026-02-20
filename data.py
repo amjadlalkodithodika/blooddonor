@@ -16,70 +16,104 @@ st.set_page_config(page_title="Blood Bank Donor Dashboard", page_icon="🩸", la
 
 # --- Google Sheets Connection ---
 def get_gsheet_client():
-    scope = ["https://spreadsheets.google.com/feeds",
-             "https://www.googleapis.com/auth/drive"]
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive.file",
+        "https://www.googleapis.com/auth/drive",
+    ]
 
-    if "gcp_service_account" in st.secrets:
-        creds_dict = st.secrets["gcp_service_account"]
-    else:
-        load_dotenv()
-        creds_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
-        creds_dict = json.loads(creds_json)
+    try:
+        if "GCP_SERVICE_ACCOUNT" in st.secrets:
+            # ✅ Streamlit secrets section is already a dict
+            creds_dict = dict(st.secrets["GCP_SERVICE_ACCOUNT"])
+        else:
+            load_dotenv()
+            creds_json = os.getenv("GCP_SERVICE_ACCOUNT_JSON")
+            if not creds_json:
+                st.error("❌ No GCP credentials found in secrets or .env")
+                return None
+            creds_dict = json.loads(creds_json)
 
-    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    return gspread.authorize(creds)
+        # Fix private key formatting
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+        return gspread.authorize(creds)
+    except Exception as e:
+        st.error(f"⚠️ Failed to connect to Google Sheets: {e}")
+        return None
 
 client = get_gsheet_client()
-workbook = client.open_by_url(
-    "https://docs.google.com/spreadsheets/d/1lUw3SaVTnzaiJAn9O5hQV_QQhkvHBt7aIDOt9Wc7aM4/edit?usp=sharing"
-)
-sheet = workbook.sheet1          # Donor data
-log_sheet = workbook.get_worksheet(1)  # Sheet2 for download logs
+if client:
+    workbook = client.open_by_url(
+        "https://docs.google.com/spreadsheets/d/1lUw3SaVTnzaiJAn9O5hQV_QQhkvHBt7aIDOt9Wc7aM4/edit?usp=sharing"
+    )
+    sheet = workbook.sheet1          # Donor data
+    log_sheet = workbook.get_worksheet(1)  # Sheet2 for download logs
+else:
+    sheet, log_sheet = None, None
 
 # --- Donor Functions ---
 def add_donor(name, age, blood_group, contact, location):
-    sheet.append_row([name, age, blood_group, contact, location])
+    if sheet:
+        sheet.append_row([name, age, blood_group, contact, location])
 
 def get_donors():
+    if not sheet:
+        return pd.DataFrame(columns=["name", "age", "blood_group", "contact", "location"])
     values = sheet.get_all_values()
     expected_headers = ["name", "age", "blood_group", "contact", "location"]
     if len(values) > 1:
-        df = pd.DataFrame(values[1:], columns=expected_headers)
-    else:
-        df = pd.DataFrame(columns=expected_headers)
-    return df
+        return pd.DataFrame(values[1:], columns=expected_headers)
+    return pd.DataFrame(columns=expected_headers)
 
 def update_donor(row_index, new_values):
-    sheet.update(f"A{row_index}:E{row_index}", [new_values])
+    if sheet:
+        sheet.update(f"A{row_index}:E{row_index}", [new_values])
 
 def delete_donor(row_index):
-    sheet.delete_rows(row_index)
+    if sheet:
+        sheet.delete_rows(row_index)
 
 def log_download(email, blood_group, locations):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_sheet.append_row([email, blood_group, ", ".join(locations) if locations else "All", timestamp])
+    if log_sheet:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_sheet.append_row([email, blood_group, ", ".join(locations) if locations else "All", timestamp])
 
 # --- Email Sending Helper ---
 def send_email(recipient, csv_data):
-    if "email" in st.secrets:
-        sender = st.secrets["email"]["SENDER"]
-        password = st.secrets["email"]["PASSWORD"]
-    else:
-        load_dotenv()
-        sender = os.getenv("EMAIL_SENDER")
-        password = os.getenv("EMAIL_PASS")
+    try:
+        validate_email(recipient)
 
-    msg = MIMEMultipart()
-    msg["From"] = sender
-    msg["To"] = recipient
-    msg["Subject"] = "Your Donor List Download"
-    msg.attach(MIMEText("Here is your requested donor list.", "plain"))
-    msg.attach(MIMEApplication(csv_data, Name="donors.csv"))
+        if "EMAIL_SENDER" in st.secrets and "EMAIL_PASS" in st.secrets:
+            sender = st.secrets["EMAIL_SENDER"]
+            password = st.secrets["EMAIL_PASS"]
+        else:
+            load_dotenv()
+            sender = os.getenv("EMAIL_SENDER")
+            password = os.getenv("EMAIL_PASS")
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(sender, password)
-        server.sendmail(sender, recipient, msg.as_string())
+        if not sender or not password:
+            st.error("❌ Email credentials not found")
+            return
+
+        msg = MIMEMultipart()
+        msg["From"] = sender
+        msg["To"] = recipient
+        msg["Subject"] = "Your Donor List Download"
+        msg.attach(MIMEText("Here is your requested donor list.", "plain"))
+        msg.attach(MIMEApplication(csv_data, Name="donors.csv"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, password)
+            server.sendmail(sender, recipient, msg.as_string())
+
+        st.success("✅ Email sent successfully!")
+    except EmailNotValidError as e:
+        st.error(f"⚠️ Invalid email address: {e}")
+    except Exception as e:
+        st.error(f"⚠️ Failed to send email: {e}")
 
 # --- Tabs ---
 tab1, tab2, tab3,= st.tabs(["Donors", "Charts", "My Details"])
