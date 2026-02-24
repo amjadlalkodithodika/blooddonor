@@ -14,6 +14,12 @@ from datetime import datetime
 
 st.set_page_config(page_title="Blood Bank Donor Dashboard", page_icon="🩸", layout="wide")
 
+st.image(
+    r"C:\Users\amjad\OneDrive\sql+python\Blood Bank\images\blood_donation.png",
+    caption="Save lives. Share hope.",
+    use_column_width=True
+)
+
 # --- Google Sheets Connection ---
 def get_gsheet_client():
     scope = [
@@ -121,58 +127,37 @@ tab1, tab2, tab3,= st.tabs(["Donors", "Charts", "My Details"])
 
 # --- Donors Tab ---
 with tab1:
-    # --- Add Donor Section ---
     st.subheader("➕ Add Donor")
-    with st.form("add_donor_form", clear_on_submit=False):
-        # --- Name ---
+    with st.form("add_donor_form", clear_on_submit=True):  # auto-clear after success
         name = st.text_input("Name")
-        st.caption(f"Characters: {len(name)}")
-        name_valid = bool(name and all(ch.isalpha() or ch.isspace() for ch in name))
-        if name:
-            if name_valid:
-                st.success("✅ Valid name")
-            else:
-                st.warning("⚠️ Name must contain only alphabetic characters and spaces.")
-
-        # --- Age ---
         age = st.text_input("Age")
-        age_valid = age.isdigit() and 18 <= int(age) <= 65 if age else False
-        if age:
-            st.caption(f"Digits: {len(age)}")
-            if age_valid:
-                st.success("✅ Valid age")
-            else:
-                st.warning("⚠️ Age must be between 18 and 65.")
-
-        # --- Blood Group ---
         blood_group = st.selectbox("Blood Group", ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"])
-        blood_group_valid = bool(blood_group)
-
-        # --- Phone ---
         contact = st.text_input("Phone No")
-        contact_valid = contact.isdigit() and len(contact) == 10 if contact else False
-        st.caption(f"Digits: {len(contact)} / 10")
-        if contact:
-            if contact_valid:
-                st.success("✅ Valid phone number")
-            else:
-                st.warning("⚠️ Phone number must be exactly 10 digits.")
-
-        # --- Location ---
         location = st.text_input("Location")
-        location_valid = location.isalpha() and len(location) <= 20 if location else False
-        st.caption(f"Characters: {len(location)} / 20")
-        if location:
-            if location_valid:
-                st.success("✅ Valid location")
-            else:
-                st.warning("⚠️ Location must be alphabetic and up to 20 characters.")
 
-        # --- Enable submit only if all fields valid ---
+        # --- Pre-check validation before enabling button ---
+        name_valid = bool(name and all(ch.isalpha() or ch.isspace() for ch in name))
+        age_valid = age.isdigit() and 18 <= int(age) <= 65 if age else False
+        blood_group_valid = bool(blood_group)
+        contact_valid = contact.isdigit() and len(contact) == 10 if contact else False
+        location_valid = location.isalpha() and len(location) <= 20 if location else False
+
         all_valid = name_valid and age_valid and blood_group_valid and contact_valid and location_valid
+
+        # Show errors inline if fields are invalid
+        if name and not name_valid:
+            st.error("⚠️ Name must contain only alphabetic characters and spaces.")
+        if age and not age_valid:
+            st.error("⚠️ Age must be between 18 and 65.")
+        if contact and not contact_valid:
+            st.error("⚠️ Phone number must be exactly 10 digits.")
+        if location and not location_valid:
+            st.error("⚠️ Location must be alphabetic and up to 20 characters.")
+
+        # Submit button only enabled if all fields valid
         submitted = st.form_submit_button("Add Donor", disabled=not all_valid)
 
-    if submitted:
+    if submitted and all_valid:
         # Auto-format capitalization
         name = " ".join([part.capitalize() for part in name.strip().split()])
         location = location.strip().capitalize()
@@ -191,7 +176,6 @@ with tab1:
     df = get_donors()
     st.subheader("📋 Donor List")
     if not df.empty:
-        # Mask phone numbers for display
         df["contact"] = df["contact"].apply(lambda x: str(x)[:-4] + "****" if len(str(x)) > 4 else "****")
         st.dataframe(df, use_container_width=True)
     else:
