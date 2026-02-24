@@ -134,16 +134,16 @@ with tab1:
         contact = st.text_input("Phone No")
         location = st.text_input("Location")
 
-        # --- Pre-check validation before enabling button ---
-        name_valid = bool(name and all(ch.isalpha() or ch.isspace() for ch in name))
-        age_valid = age.isdigit() and 18 <= int(age) <= 65 if age else False
-        blood_group_valid = bool(blood_group)
-        contact_valid = contact.isdigit() and len(contact) == 10 if contact else False
-        location_valid = location.isalpha() and len(location) <= 20 if location else False
+        # --- Improved validation ---
+        name_valid = bool(name.strip()) and all(ch.isalpha() or ch.isspace() for ch in name.strip())
+        age_valid = age.strip().isdigit() and 18 <= int(age.strip()) <= 65
+        blood_group_valid = blood_group in ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]
+        contact_valid = contact.strip().isdigit() and len(contact.strip()) == 10
+        location_valid = bool(location.strip()) and location.replace(" ", "").isalpha() and len(location.strip()) <= 20
 
         all_valid = name_valid and age_valid and blood_group_valid and contact_valid and location_valid
 
-        # Show errors inline if fields are invalid
+        # Show inline errors only if user typed something invalid
         if name and not name_valid:
             st.error("⚠️ Name must contain only alphabetic characters and spaces.")
         if age and not age_valid:
@@ -153,21 +153,21 @@ with tab1:
         if location and not location_valid:
             st.error("⚠️ Location must be alphabetic and up to 20 characters.")
 
-        # Submit button only enabled if all fields valid
+        # Submit button enabled only if all fields valid
         submitted = st.form_submit_button("Add Donor", disabled=not all_valid)
 
-    if submitted and all_valid:
-        # Auto-format capitalization
+    if submitted:
+        # At this point, all_valid is guaranteed True
         name = " ".join([part.capitalize() for part in name.strip().split()])
         location = location.strip().capitalize()
 
         df = get_donors()
-        duplicate = df[(df["name"].str.lower() == name.lower()) & (df["contact"] == contact)]
+        duplicate = df[(df["name"].str.lower() == name.lower()) & (df["contact"] == contact.strip())]
         if not duplicate.empty:
             st.error("⚠️ Donor already exists with the same name and phone number!")
         else:
             next_row = len(sheet.get_all_values()) + 1
-            sheet.update(f"A{next_row}:E{next_row}", [[name, int(age), blood_group, contact, location]])
+            sheet.update(f"A{next_row}:E{next_row}", [[name, int(age.strip()), blood_group, contact.strip(), location]])
             st.success("✅ Donor added successfully!")
             st.rerun()
 
@@ -179,6 +179,7 @@ with tab1:
         st.dataframe(df, use_container_width=True)
     else:
         st.info("No donors available yet.")
+
 
     # --- Download via Email (stored in Sheet2/Table2 silently) ---
     st.subheader("📧 Download via Email")
@@ -345,6 +346,7 @@ with tab3:
     - 📸 [Instagram](https://instagram.com/amjadlal_kodithodika)  
     - 💼 [LinkedIn](https://linkedin.com/in/amjadlalk)  
     """)
+
 
 
 
