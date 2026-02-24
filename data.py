@@ -14,8 +14,7 @@ from datetime import datetime
 
 st.set_page_config(page_title="Blood Bank Donor Dashboard", page_icon="🩸", layout="wide")
 
-st.image(
-    r"C:\Users\amjad\OneDrive\sql+python\Blood Bank\images\blood_donation.png",
+st.image("images\blood_donation.png",
     caption="Save lives. Share hope.",
     use_column_width=True
 )
@@ -346,3 +345,4 @@ with tab3:
     - 📸 [Instagram](https://instagram.com/amjadlal_kodithodika)  
     - 💼 [LinkedIn](https://linkedin.com/in/amjadlalk)  
     """)
+
