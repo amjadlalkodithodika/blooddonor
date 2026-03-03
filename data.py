@@ -612,27 +612,27 @@ with tab3:
 
     # --- Download CV Button ---
 
-# Raw GitHub link (for download)
-cv_raw_url = "https://raw.githubusercontent.com/amjadlalkodithodika/blooddonor/main/amjadlalkodithodika.pdf"
-cv_file = requests.get(cv_raw_url).content
-
-# Blob GitHub link (for online viewing)
-cv_view_url = "https://github.com/amjadlalkodithodika/blooddonor/blob/main/amjadlalkodithodika.pdf"
-
-# Download button
-st.download_button(
-    label="📄 Download My CV",
-    data=cv_file,
-    file_name="Amjad_Lal_CV.pdf",
-    mime="application/pdf",
-    key="download_cv_button"
-)
-
-# View online link
-st.markdown(
-    f"[🔗 View CV Online]({cv_view_url})",
-    unsafe_allow_html=True
-)
+    # Raw GitHub link (for download)
+    cv_raw_url = "https://raw.githubusercontent.com/amjadlalkodithodika/blooddonor/main/amjadlalkodithodika.pdf"
+    cv_file = requests.get(cv_raw_url).content
+    
+    # Blob GitHub link (for online viewing)
+    cv_view_url = "https://github.com/amjadlalkodithodika/blooddonor/blob/main/amjadlalkodithodika.pdf"
+    
+    # Download button
+    st.download_button(
+        label="📄 Download My CV",
+        data=cv_file,
+        file_name="Amjad_Lal_CV.pdf",
+        mime="application/pdf",
+        key="download_cv_button"
+    )
+    
+    # View online link
+    st.markdown(
+        f"[🔗 View CV Online]({cv_view_url})",
+        unsafe_allow_html=True
+    )
 
 # Disclaimer
 with st.expander("⚠️ Disclaimer", expanded=False):
@@ -648,4 +648,5 @@ with st.expander("⚠️ Disclaimer", expanded=False):
         """,
         unsafe_allow_html=True
     )
+
 
