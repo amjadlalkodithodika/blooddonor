@@ -18,6 +18,6 @@ CV Access: Download button styled to match the theme + online view link.
 From a basic donor entry form → to a fully branded, recruiter‑friendly dashboard with professional polish and deployment readiness.
 
 🔗 Links
-Live App: [blooddonor.streamlit.app]
+Live App: [(https://blooddonor.streamlit.app/)]
 
 Source Code: [(https://github.com/amjadlalkodithodika/blooddonor)]
